@@ -6,6 +6,7 @@ type ExpenseListProps = {
   totalSpent: number;
   participantNameFor: (id: string) => string;
   sharedNamesFor: (expense: Expense) => string;
+  onEditExpense: (expense: Expense) => void;
   onRemoveExpense: (id: string) => void;
 };
 
@@ -14,6 +15,7 @@ export function ExpenseList({
   totalSpent,
   participantNameFor,
   sharedNamesFor,
+  onEditExpense,
   onRemoveExpense,
 }: ExpenseListProps) {
   return (
@@ -42,13 +44,22 @@ export function ExpenseList({
                 </p>
               </div>
               <p className="text-sm font-semibold">{formatCurrency(expense.amount)}</p>
-              <button
-                className="justify-self-start text-sm font-medium text-slate-500 hover:text-red-600 sm:justify-self-end"
-                onClick={() => onRemoveExpense(expense.id)}
-                type="button"
-              >
-                Remove
-              </button>
+              <div className="flex gap-3 justify-self-start sm:justify-self-end">
+                <button
+                  className="text-sm font-medium text-slate-500 hover:text-teal-700"
+                  onClick={() => onEditExpense(expense)}
+                  type="button"
+                >
+                  Edit
+                </button>
+                <button
+                  className="text-sm font-medium text-slate-500 hover:text-red-600"
+                  onClick={() => onRemoveExpense(expense.id)}
+                  type="button"
+                >
+                  Remove
+                </button>
+              </div>
             </div>
           ))
         )}

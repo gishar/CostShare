@@ -6,6 +6,8 @@ type BalanceTableProps = {
 };
 
 export function BalanceTable({ balances }: BalanceTableProps) {
+  const sortedBalances = [...balances].sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
+
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <h2 className="text-lg font-semibold">Balances</h2>
@@ -13,29 +15,37 @@ export function BalanceTable({ balances }: BalanceTableProps) {
         {balances.length === 0 ? (
           <p className="text-sm text-slate-500">Add participants to see balances.</p>
         ) : (
-          balances.map((balance) => (
-            <div
-              className="grid gap-1 rounded-md bg-slate-50 px-3 py-2 sm:grid-cols-[1fr_auto] sm:items-center"
-              key={balance.participantId}
-            >
-              <div>
-                <p className="text-sm font-medium">{balance.name}</p>
-                <p className="text-xs text-slate-500">
-                  Paid {formatCurrency(balance.paid)} / Share {formatCurrency(balance.share)}
+          sortedBalances.map((balance) => {
+            const isPositive = balance.net >= 0;
+
+            return (
+              <div
+                className={
+                  isPositive
+                    ? 'grid gap-1 rounded-md bg-emerald-50 px-3 py-2 sm:grid-cols-[1fr_auto] sm:items-center'
+                    : 'grid gap-1 rounded-md bg-red-50 px-3 py-2 sm:grid-cols-[1fr_auto] sm:items-center'
+                }
+                key={balance.participantId}
+              >
+                <div>
+                  <p className="text-sm font-medium">{balance.name}</p>
+                  <p className="text-xs text-slate-500">
+                    Paid {formatCurrency(balance.paid)} / Share {formatCurrency(balance.share)}
+                  </p>
+                </div>
+                <p
+                  className={
+                    isPositive
+                      ? 'text-sm font-semibold text-emerald-700'
+                      : 'text-sm font-semibold text-red-700'
+                  }
+                >
+                  {isPositive ? 'Owed ' : 'Owes '}
+                  {formatCurrency(Math.abs(balance.net))}
                 </p>
               </div>
-              <p
-                className={
-                  balance.net >= 0
-                    ? 'text-sm font-semibold text-emerald-700'
-                    : 'text-sm font-semibold text-red-700'
-                }
-              >
-                {balance.net >= 0 ? 'Is owed ' : 'Owes '}
-                {formatCurrency(Math.abs(balance.net))}
-              </p>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </section>

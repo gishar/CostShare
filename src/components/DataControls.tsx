@@ -4,9 +4,14 @@ import type { ChangeEvent } from 'react';
 type DataControlsProps = {
   onExportData: () => void;
   onImportData: (file: File) => void;
+  onResetAllData: () => void;
 };
 
-export function DataControls({ onExportData, onImportData }: DataControlsProps) {
+export function DataControls({
+  onExportData,
+  onImportData,
+  onResetAllData,
+}: DataControlsProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   function handleImportClick() {
@@ -38,6 +43,13 @@ export function DataControls({ onExportData, onImportData }: DataControlsProps) 
         type="button"
       >
         Import Data
+      </button>
+      <button
+        className="rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+        onClick={onResetAllData}
+        type="button"
+      >
+        Reset All Data
       </button>
       <input
         accept="application/json,.json"

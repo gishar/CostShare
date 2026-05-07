@@ -9,8 +9,17 @@ import type { Balance, Expense, Participant, Settlement } from './types';
 
 const PARTICIPANTS_KEY = 'fairshare:participants';
 const EXPENSES_KEY = 'fairshare:expenses';
+const EVENT_NAME_KEY = 'costshare:eventName';
+const DEFAULT_EVENT_NAME = 'Untitled CostShare';
 
-type FairShareData = {
+type CostShareData = {
+  eventName: string;
+  participants: Participant[];
+  expenses: Expense[];
+};
+
+type ImportedCostShareData = {
+  eventName?: string;
   participants: Participant[];
   expenses: Expense[];
 };
@@ -52,21 +61,22 @@ function isExpense(value: unknown): value is Expense {
   );
 }
 
-function isFairShareData(value: unknown): value is FairShareData {
+function isCostShareData(value: unknown): value is ImportedCostShareData {
   if (
     typeof value !== 'object' ||
     value === null ||
-    !Array.isArray((value as FairShareData).participants) ||
-    !Array.isArray((value as FairShareData).expenses) ||
-    !(value as FairShareData).participants.every(isParticipant) ||
-    !(value as FairShareData).expenses.every(isExpense)
+    ('eventName' in value && typeof (value as ImportedCostShareData).eventName !== 'string') ||
+    !Array.isArray((value as ImportedCostShareData).participants) ||
+    !Array.isArray((value as ImportedCostShareData).expenses) ||
+    !(value as ImportedCostShareData).participants.every(isParticipant) ||
+    !(value as ImportedCostShareData).expenses.every(isExpense)
   ) {
     return false;
   }
 
-  const participantIds = new Set((value as FairShareData).participants.map((participant) => participant.id));
+  const participantIds = new Set((value as ImportedCostShareData).participants.map((participant) => participant.id));
 
-  return (value as FairShareData).expenses.every(
+  return (value as ImportedCostShareData).expenses.every(
     (expense) =>
       participantIds.has(expense.paidBy) &&
       expense.sharedWith.length > 0 &&
@@ -145,6 +155,9 @@ function calculateSettlements(balances: Balance[]): Settlement[] {
 }
 
 export default function App() {
+  const [eventName, setEventName] = useState(() =>
+    loadStoredData(EVENT_NAME_KEY, DEFAULT_EVENT_NAME),
+  );
   const [participants, setParticipants] = useState<Participant[]>(() =>
     loadStoredData(PARTICIPANTS_KEY, []),
   );
@@ -154,13 +167,34 @@ export default function App() {
   const [expenseAmount, setExpenseAmount] = useState('');
   const [paidBy, setPaidBy] = useState('');
   const [selectedParticipantIds, setSelectedParticipantIds] = useState<string[]>([]);
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+  const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
+  const [expenseFocusKey, setExpenseFocusKey] = useState(0);
 
   useEffect(() => {
-    localStorage.setItem(PARTICIPANTS_KEY, JSON.stringify(participants));
+    const trimmedEventName = eventName.trim();
+
+    if (trimmedEventName && trimmedEventName !== DEFAULT_EVENT_NAME) {
+      localStorage.setItem(EVENT_NAME_KEY, JSON.stringify(trimmedEventName));
+    } else {
+      localStorage.removeItem(EVENT_NAME_KEY);
+    }
+  }, [eventName]);
+
+  useEffect(() => {
+    if (participants.length > 0) {
+      localStorage.setItem(PARTICIPANTS_KEY, JSON.stringify(participants));
+    } else {
+      localStorage.removeItem(PARTICIPANTS_KEY);
+    }
   }, [participants]);
 
   useEffect(() => {
-    localStorage.setItem(EXPENSES_KEY, JSON.stringify(expenses));
+    if (expenses.length > 0) {
+      localStorage.setItem(EXPENSES_KEY, JSON.stringify(expenses));
+    } else {
+      localStorage.removeItem(EXPENSES_KEY);
+    }
   }, [expenses]);
 
   useEffect(() => {
@@ -182,6 +216,21 @@ export default function App() {
     });
   }, [participants]);
 
+  useEffect(() => {
+    if (editingExpenseId && !expenses.some((expense) => expense.id === editingExpenseId)) {
+      clearExpenseForm();
+    }
+  }, [editingExpenseId, expenses]);
+
+  useEffect(() => {
+    if (
+      editingParticipantId &&
+      !participants.some((participant) => participant.id === editingParticipantId)
+    ) {
+      clearParticipantForm();
+    }
+  }, [editingParticipantId, participants]);
+
   const balances = useMemo(
     () => calculateBalances(participants, expenses),
     [participants, expenses],
@@ -190,15 +239,34 @@ export default function App() {
 
   const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
 
-  function addParticipant() {
+  function clearParticipantForm() {
+    setEditingParticipantId(null);
+    setParticipantName('');
+  }
+
+  function saveParticipant() {
     const name = participantName.trim();
 
     if (!name) {
       return;
     }
 
-    setParticipants((current) => [...current, { id: createId(), name }]);
-    setParticipantName('');
+    if (editingParticipantId) {
+      setParticipants((current) =>
+        current.map((participant) =>
+          participant.id === editingParticipantId ? { ...participant, name } : participant,
+        ),
+      );
+    } else {
+      setParticipants((current) => [...current, { id: createId(), name }]);
+    }
+
+    clearParticipantForm();
+  }
+
+  function editParticipant(participant: Participant) {
+    setEditingParticipantId(participant.id);
+    setParticipantName(participant.name);
   }
 
   function removeParticipant(id: string) {
@@ -212,9 +280,27 @@ export default function App() {
         }))
         .filter((expense) => expense.sharedWith.length > 0),
     );
+
+    if (editingParticipantId === id) {
+      clearParticipantForm();
+    }
   }
 
-  function addExpense() {
+  function clearExpenseForm() {
+    setEditingExpenseId(null);
+    setExpenseDescription('');
+    setExpenseAmount('');
+    setSelectedParticipantIds(participants.map((participant) => participant.id));
+  }
+
+  function clearExpenseFieldsAfterSave() {
+    setEditingExpenseId(null);
+    setExpenseDescription('');
+    setExpenseAmount('');
+    setExpenseFocusKey((current) => current + 1);
+  }
+
+  function saveExpense() {
     const amount = Number(expenseAmount);
     const description = expenseDescription.trim() || 'Expense';
 
@@ -222,24 +308,51 @@ export default function App() {
       return;
     }
 
-    setExpenses((current) => [
-      ...current,
-      {
-        id: createId(),
-        description,
-        amount,
-        paidBy,
-        sharedWith: [...selectedParticipantIds],
-        createdAt: new Date().toISOString(),
-      },
-    ]);
-    setExpenseDescription('');
-    setExpenseAmount('');
-    setSelectedParticipantIds(participants.map((participant) => participant.id));
+    if (editingExpenseId) {
+      setExpenses((current) =>
+        current.map((expense) =>
+          expense.id === editingExpenseId
+            ? {
+                ...expense,
+                description,
+                amount,
+                paidBy,
+                sharedWith: [...selectedParticipantIds],
+              }
+            : expense,
+        ),
+      );
+    } else {
+      setExpenses((current) => [
+        ...current,
+        {
+          id: createId(),
+          description,
+          amount,
+          paidBy,
+          sharedWith: [...selectedParticipantIds],
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    }
+
+    clearExpenseFieldsAfterSave();
   }
 
   function removeExpense(id: string) {
     setExpenses((current) => current.filter((expense) => expense.id !== id));
+
+    if (editingExpenseId === id) {
+      clearExpenseForm();
+    }
+  }
+
+  function editExpense(expense: Expense) {
+    setEditingExpenseId(expense.id);
+    setExpenseDescription(expense.description);
+    setExpenseAmount(String(expense.amount));
+    setPaidBy(expense.paidBy);
+    setSelectedParticipantIds(sharedWithFor(expense, participants));
   }
 
   function participantNameFor(id: string): string {
@@ -259,13 +372,17 @@ export default function App() {
   }
 
   function exportData() {
-    const data: FairShareData = { participants, expenses };
+    const data: CostShareData = {
+      eventName: eventName.trim() || DEFAULT_EVENT_NAME,
+      participants,
+      expenses,
+    };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
 
     link.href = url;
-    link.download = 'fairshare-data.json';
+    link.download = 'costshare-data.json';
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -275,22 +392,24 @@ export default function App() {
       const text = await file.text();
       const data = JSON.parse(text) as unknown;
 
-      if (!isFairShareData(data)) {
-        window.alert('Import failed. Please choose a valid FairShare JSON file.');
+      if (!isCostShareData(data)) {
+        window.alert('Import failed. Please choose a valid CostShare JSON file.');
         return;
       }
 
-      const confirmed = window.confirm('Importing will overwrite your current FairShare data.');
+      const confirmed = window.confirm('Importing will overwrite your current CostShare data.');
 
       if (!confirmed) {
         return;
       }
 
+      setEventName(data.eventName?.trim() || DEFAULT_EVENT_NAME);
       setParticipants(data.participants);
       setExpenses(data.expenses);
-      setParticipantName('');
+      clearParticipantForm();
       setExpenseDescription('');
       setExpenseAmount('');
+      setEditingExpenseId(null);
       setPaidBy(data.participants[0]?.id ?? '');
       setSelectedParticipantIds(data.participants.map((participant) => participant.id));
     } catch {
@@ -298,36 +417,81 @@ export default function App() {
     }
   }
 
+  function resetAllData() {
+    const confirmed = window.confirm('This will permanently delete all CostShare data.');
+
+    if (!confirmed) {
+      return;
+    }
+
+    localStorage.removeItem(PARTICIPANTS_KEY);
+    localStorage.removeItem(EXPENSES_KEY);
+    localStorage.removeItem(EVENT_NAME_KEY);
+    setEventName(DEFAULT_EVENT_NAME);
+    setParticipants([]);
+    setExpenses([]);
+    setEditingParticipantId(null);
+    setParticipantName('');
+    setExpenseDescription('');
+    setExpenseAmount('');
+    setPaidBy('');
+    setSelectedParticipantIds([]);
+    setEditingExpenseId(null);
+  }
+
   return (
     <main className="min-h-screen px-4 py-8 text-slate-900 sm:px-6">
       <div className="mx-auto max-w-4xl space-y-6">
         <header className="space-y-2">
-          <p className="text-sm font-medium uppercase tracking-wide text-teal-700">FairShare</p>
-          <h1 className="text-3xl font-semibold">Split group expenses equally</h1>
+          <p className="text-sm font-medium uppercase tracking-wide text-teal-700">CostShare</p>
+          <h1 className="text-3xl font-semibold">Split shared costs clearly</h1>
           <p className="max-w-2xl text-sm text-slate-600">
-            Add participants, record expenses, and see who is ahead or behind.
+            Split shared costs clearly, even when not everyone shares every expense.
           </p>
         </header>
 
-        <DataControls onExportData={exportData} onImportData={importData} />
+        <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <label className="block text-sm font-medium text-slate-700" htmlFor="event-name">
+            Event name
+          </label>
+          <input
+            className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+            id="event-name"
+            onChange={(event) => setEventName(event.target.value)}
+            placeholder={DEFAULT_EVENT_NAME}
+            value={eventName}
+          />
+        </section>
+
+        <DataControls
+          onExportData={exportData}
+          onImportData={importData}
+          onResetAllData={resetAllData}
+        />
 
         <section className="grid gap-4 md:grid-cols-2">
           <ParticipantManager
+            isEditing={editingParticipantId !== null}
             name={participantName}
-            onAddParticipant={addParticipant}
+            onCancelEdit={clearParticipantForm}
+            onEditParticipant={editParticipant}
             onNameChange={setParticipantName}
             onRemoveParticipant={removeParticipant}
+            onSaveParticipant={saveParticipant}
             participants={participants}
           />
 
           <ExpenseForm
             amount={expenseAmount}
             description={expenseDescription}
-            onAddExpense={addExpense}
+            focusKey={expenseFocusKey}
             onAmountChange={setExpenseAmount}
+            onCancelEdit={clearExpenseForm}
             onDescriptionChange={setExpenseDescription}
             onPaidByChange={setPaidBy}
+            onSaveExpense={saveExpense}
             onToggleSharedParticipant={toggleSharedParticipant}
+            isEditing={editingExpenseId !== null}
             paidBy={paidBy}
             participants={participants}
             selectedParticipantIds={selectedParticipantIds}
@@ -336,6 +500,7 @@ export default function App() {
 
         <ExpenseList
           expenses={expenses}
+          onEditExpense={editExpense}
           onRemoveExpense={removeExpense}
           participantNameFor={participantNameFor}
           sharedNamesFor={sharedNamesFor}

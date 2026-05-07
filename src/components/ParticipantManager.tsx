@@ -2,23 +2,29 @@ import type { FormEvent } from 'react';
 import type { Participant } from '../types';
 
 type ParticipantManagerProps = {
+  isEditing: boolean;
   name: string;
   participants: Participant[];
-  onAddParticipant: () => void;
+  onCancelEdit: () => void;
+  onEditParticipant: (participant: Participant) => void;
   onNameChange: (name: string) => void;
   onRemoveParticipant: (id: string) => void;
+  onSaveParticipant: () => void;
 };
 
 export function ParticipantManager({
+  isEditing,
   name,
   participants,
-  onAddParticipant,
+  onCancelEdit,
+  onEditParticipant,
   onNameChange,
   onRemoveParticipant,
+  onSaveParticipant,
 }: ParticipantManagerProps) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onAddParticipant();
+    onSaveParticipant();
   }
 
   return (
@@ -35,8 +41,17 @@ export function ParticipantManager({
           className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800"
           type="submit"
         >
-          Add
+          {isEditing ? 'Save' : 'Add'}
         </button>
+        {isEditing && (
+          <button
+            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            onClick={onCancelEdit}
+            type="button"
+          >
+            Cancel
+          </button>
+        )}
       </form>
 
       <div className="mt-4 space-y-2">
@@ -49,13 +64,22 @@ export function ParticipantManager({
               key={participant.id}
             >
               <span className="text-sm font-medium">{participant.name}</span>
-              <button
-                className="text-sm font-medium text-slate-500 hover:text-red-600"
-                onClick={() => onRemoveParticipant(participant.id)}
-                type="button"
-              >
-                Remove
-              </button>
+              <div className="flex gap-3">
+                <button
+                  className="text-sm font-medium text-slate-500 hover:text-teal-700"
+                  onClick={() => onEditParticipant(participant)}
+                  type="button"
+                >
+                  Edit
+                </button>
+                <button
+                  className="text-sm font-medium text-slate-500 hover:text-red-600"
+                  onClick={() => onRemoveParticipant(participant.id)}
+                  type="button"
+                >
+                  Remove
+                </button>
+              </div>
             </div>
           ))
         )}
