@@ -29,7 +29,7 @@ export function ExpenseList({
 
       <div className="mt-4 space-y-2">
         {expenses.length === 0 ? (
-          <p className="text-sm text-slate-500">No expenses yet.</p>
+          <p className="text-sm text-slate-500">No expenses yet</p>
         ) : (
           expenses.map((expense) => (
             <div
@@ -44,7 +44,7 @@ export function ExpenseList({
                 </p>
               </div>
               <p className="text-sm font-semibold">{formatCurrency(expense.amount)}</p>
-              <div className="flex gap-3 justify-self-start sm:justify-self-end">
+              <div className="no-print flex gap-3 justify-self-start sm:justify-self-end">
                 <button
                   className="text-sm font-medium text-slate-500 hover:text-teal-700"
                   onClick={() => onEditExpense(expense)}

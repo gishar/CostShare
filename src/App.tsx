@@ -11,6 +11,30 @@ const PARTICIPANTS_KEY = 'fairshare:participants';
 const EXPENSES_KEY = 'fairshare:expenses';
 const EVENT_NAME_KEY = 'costshare:eventName';
 const DEFAULT_EVENT_NAME = 'Untitled CostShare';
+const COSTSHARE_URL = 'https://costshare.alestead.com';
+const FOOTER_SENTENCES = [
+  'Good friendships survive shared expenses.',
+  'Math is easier than remembering who paid last time.',
+  'Somebody always forgets the parking fee.',
+  'Clear costs make better trips.',
+  'Less arguing. More traveling.',
+  'Every group has one person who pays for everything first.',
+  'Shared memories are better when the math works out.',
+  'The spreadsheet era is officially over.',
+  'Nobody actually enjoys splitting expenses manually.',
+  'Good accounting is underrated.',
+];
+const TRAVEL_SENTENCES = [
+  'Clear costs make better trips.',
+  'Less arguing. More traveling.',
+  'Shared memories are better when the math works out.',
+];
+const FOOD_SENTENCES = [
+  'Good friendships survive shared expenses.',
+  'Math is easier than remembering who paid last time.',
+  'Every group has one person who pays for everything first.',
+  'Nobody actually enjoys splitting expenses manually.',
+];
 
 type CostShareData = {
   eventName: string;
@@ -35,6 +59,54 @@ function loadStoredData<T>(key: string, fallback: T): T {
 
 function createId(): string {
   return crypto.randomUUID();
+}
+
+function chooseRandom(values: string[]): string {
+  return values[Math.floor(Math.random() * values.length)];
+}
+
+function chooseFooterSentence(expenses: Expense[]): string {
+  const descriptions = expenses.map((expense) => expense.description.toLowerCase()).join(' ');
+  const hasKeyword = (keywords: string[]) =>
+    keywords.some((keyword) => descriptions.includes(keyword));
+
+  if (hasKeyword(['parking', 'toll', 'ticket', 'fee'])) {
+    return 'Somebody always forgets the parking fee.';
+  }
+
+  if (hasKeyword(['hotel', 'cabin', 'airbnb', 'flight', 'gas', 'trip', 'rental'])) {
+    return chooseRandom(TRAVEL_SENTENCES);
+  }
+
+  if (
+    hasKeyword([
+      'dinner',
+      'lunch',
+      'breakfast',
+      'restaurant',
+      'coffee',
+      'pizza',
+      'groceries',
+      'food',
+    ])
+  ) {
+    return chooseRandom(FOOD_SENTENCES);
+  }
+
+  return chooseRandom(FOOTER_SENTENCES);
+}
+
+function formatCsvMoney(amount: number): string {
+  return amount.toFixed(2);
+}
+
+function csvCell(value: string | number): string {
+  const text = String(value);
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+function csvRow(values: Array<string | number>): string {
+  return values.map(csvCell).join(',');
 }
 
 function isParticipant(value: unknown): value is Participant {
@@ -170,6 +242,10 @@ export default function App() {
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [editingParticipantId, setEditingParticipantId] = useState<string | null>(null);
   const [expenseFocusKey, setExpenseFocusKey] = useState(0);
+  const [footerSentence, setFooterSentence] = useState(() =>
+    chooseFooterSentence(loadStoredData(EXPENSES_KEY, [])),
+  );
+  const [shareMessage, setShareMessage] = useState('');
 
   useEffect(() => {
     const trimmedEventName = eventName.trim();
@@ -387,6 +463,84 @@ export default function App() {
     URL.revokeObjectURL(url);
   }
 
+  function exportSpreadsheet() {
+    const currentEventName = eventName.trim() || DEFAULT_EVENT_NAME;
+    const sortedBalances = [...balances].sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
+    const rows = [
+      csvRow(['Event Name', currentEventName]),
+      '',
+      csvRow(['Participants']),
+      csvRow(['Name']),
+      ...participants.map((participant) => csvRow([participant.name])),
+      '',
+      csvRow(['Expenses']),
+      csvRow(['Description', 'Amount', 'Paid By', 'Shared With']),
+      ...expenses.map((expense) =>
+        csvRow([
+          expense.description,
+          formatCsvMoney(expense.amount),
+          participantNameFor(expense.paidBy),
+          sharedNamesFor(expense),
+        ]),
+      ),
+      '',
+      csvRow(['Balances']),
+      csvRow(['Name', 'Paid', 'Share', 'Net', 'Status']),
+      ...sortedBalances.map((balance) =>
+        csvRow([
+          balance.name,
+          formatCsvMoney(balance.paid),
+          formatCsvMoney(balance.share),
+          formatCsvMoney(balance.net),
+          balance.net >= 0 ? 'Owed' : 'Owes',
+        ]),
+      ),
+      '',
+      csvRow(['Settlements']),
+      csvRow(['From', 'To', 'Amount']),
+      ...settlements.map((settlement) =>
+        csvRow([
+          settlement.fromName,
+          settlement.toName,
+          formatCsvMoney(settlement.amount),
+        ]),
+      ),
+    ];
+    const blob = new Blob([`\uFEFF${rows.join('\r\n')}`], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = 'costshare-spreadsheet.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function printPage() {
+    window.print();
+  }
+
+  async function shareCostShare() {
+    const shareData = {
+      title: 'CostShare',
+      text: 'Try CostShare for splitting shared expenses.',
+      url: COSTSHARE_URL,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return;
+      }
+
+      await navigator.clipboard.writeText(COSTSHARE_URL);
+      setShareMessage('Link copied');
+      window.setTimeout(() => setShareMessage(''), 2500);
+    } catch {
+      setShareMessage('');
+    }
+  }
+
   async function importData(file: File) {
     try {
       const text = await file.text();
@@ -406,6 +560,7 @@ export default function App() {
       setEventName(data.eventName?.trim() || DEFAULT_EVENT_NAME);
       setParticipants(data.participants);
       setExpenses(data.expenses);
+      setFooterSentence(chooseFooterSentence(data.expenses));
       clearParticipantForm();
       setExpenseDescription('');
       setExpenseAmount('');
@@ -437,6 +592,7 @@ export default function App() {
     setPaidBy('');
     setSelectedParticipantIds([]);
     setEditingExpenseId(null);
+    setFooterSentence(chooseFooterSentence([]));
   }
 
   return (
@@ -455,17 +611,22 @@ export default function App() {
             Event name
           </label>
           <input
-            className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+            className="no-print mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
             id="event-name"
             onChange={(event) => setEventName(event.target.value)}
             placeholder={DEFAULT_EVENT_NAME}
             value={eventName}
           />
+          <p className="print-only mt-1 text-lg font-semibold">
+            {eventName.trim() || DEFAULT_EVENT_NAME}
+          </p>
         </section>
 
         <DataControls
           onExportData={exportData}
+          onExportSpreadsheet={exportSpreadsheet}
           onImportData={importData}
+          onPrintPage={printPage}
           onResetAllData={resetAllData}
         />
 
@@ -510,6 +671,46 @@ export default function App() {
         <BalanceTable balances={balances} />
 
         <SettlementList settlements={settlements} />
+
+        <footer className="no-print mt-4 space-y-3 pb-2 text-center text-xs text-slate-500">
+          <p>{footerSentence}</p>
+          <p className="flex flex-col items-center justify-center gap-2 border-t border-slate-200 pt-3 sm:flex-row sm:gap-3">
+            <span>
+              Made by{' '}
+              <a
+                className="font-medium text-slate-600 underline-offset-4 transition hover:text-teal-700 hover:underline"
+                href="https://alestead.com"
+                rel="noreferrer"
+                target="_blank"
+              >
+                Caspian Ale
+              </a>
+            </span>
+            <span className="hidden text-slate-300 sm:inline">·</span>
+            <span>
+              Have an idea?{' '}
+              <a
+                className="font-medium text-slate-600 underline-offset-4 transition hover:text-teal-700 hover:underline"
+                href={`mailto:gishar@gmail.com?subject=${encodeURIComponent(
+                  'CostShare Feedback',
+                )}&body=${encodeURIComponent(
+                  'Hi Caspian,\n\nI tried CostShare and wanted to share this feedback:\n\n',
+                )}`}
+              >
+                Send feedback
+              </a>
+            </span>
+            <span className="hidden text-slate-300 sm:inline">·</span>
+            <button
+              className="border-0 bg-transparent p-0 font-medium text-slate-600 underline-offset-4 transition hover:text-teal-700 hover:underline"
+              onClick={shareCostShare}
+              type="button"
+            >
+              Share this tool
+            </button>
+          </p>
+          {shareMessage && <p className="text-[11px] text-teal-700">{shareMessage}</p>}
+        </footer>
       </div>
     </main>
   );

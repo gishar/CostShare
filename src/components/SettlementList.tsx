@@ -11,7 +11,7 @@ export function SettlementList({ settlements }: SettlementListProps) {
       <h2 className="text-lg font-semibold">Settlements</h2>
       <div className="mt-4 space-y-2">
         {settlements.length === 0 ? (
-          <p className="text-sm text-slate-500">No payments needed yet.</p>
+          <p className="text-sm text-slate-500">No settlements needed</p>
         ) : (
           settlements.map((settlement) => (
             <div

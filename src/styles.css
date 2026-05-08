@@ -8,3 +8,52 @@ body {
   min-height: 100vh;
   background: #f8fafc;
 }
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    margin: 0.6in;
+  }
+
+  body {
+    background: #ffffff;
+    color: #0f172a;
+  }
+
+  .no-print,
+  button,
+  input,
+  select {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block;
+  }
+
+  main {
+    min-height: auto !important;
+    padding: 0 !important;
+  }
+
+  section,
+  header,
+  div {
+    box-shadow: none !important;
+  }
+
+  section {
+    break-inside: avoid;
+    border-color: #cbd5e1 !important;
+    background: #ffffff !important;
+  }
+
+  .bg-slate-50,
+  .bg-emerald-50,
+  .bg-red-50 {
+    background: #ffffff !important;
+  }
+}

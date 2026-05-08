@@ -47,7 +47,7 @@ export function ExpenseForm({
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="no-print rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <h2 className="text-lg font-semibold">{isEditing ? 'Edit expense' : 'Add expense'}</h2>
       <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
         <input
@@ -86,7 +86,10 @@ export function ExpenseForm({
         </div>
         {participants.length > 0 && (
           <div className="space-y-2 rounded-md bg-slate-50 p-3">
-            <p className="text-sm font-medium text-slate-700">Shared with</p>
+            <div>
+              <p className="text-sm font-medium text-slate-700">Shared with</p>
+              <p className="text-xs text-slate-500">Only selected people split this expense.</p>
+            </div>
             <div className="space-y-2">
               {participants.map((participant) => (
                 <label
