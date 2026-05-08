@@ -6,13 +6,9 @@ A lightweight web app for splitting shared costs clearly, especially when not ev
 
 ## Why I Built This
 
-Shared expenses during trips, dinners, family outings, or group activities are rarely split evenly across everyone involved.
+Shared expenses during trips, dinners, family outings, or group activities are rarely split evenly across everyone involved. One person pays for parking. A few people join dinner. Someone covers groceries for the cabin. Another person pays for gas. Then later comes the awkward part: figuring out who owes what. Most tools I tried either felt too rigid, too complex, or assumed every expense was shared equally among everyone, or it had a paywall. CostShare was built to keep this process simple and practical. 
 
-One person pays for parking. A few people join dinner. Someone covers groceries for the cabin. Another person pays for gas. Then later comes the awkward part: figuring out who owes what.
-
-Most tools I tried either felt too rigid, too complex, or assumed every expense was shared equally among everyone.
-
-CostShare was built to keep this process simple and practical.
+CostShare is intentionally lightweight, simple, and friction-free. The goal is not to become a full financial platform, but to solve a very common real-world annoyance cleanly and quickly.
 
 ## Features
 
@@ -48,39 +44,15 @@ CostShare was built to keep this process simple and practical.
 - Vite
 - Vercel Deployment
 
-## Development
+## Feedback
 
-Clone the repository:
-
-```bash
-git clone https://github.com/gishar/CostShare.git
-cd CostShare
-```
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-Run the development server:
-
-```bash
-npm run dev
-```
-
-Build for production:
-
-```bash
-npm run build
-```
-
-Preview the production build:
-
-```bash
-npm run preview
-```
+Ideas, suggestions, and improvements are always welcome.
+Website: https://alestead.com
 
 ## Notes
 
 CostShare stores data locally in the browser using localStorage. No account, backend, or cloud sync is required.
+
+## License
+
+MIT License
