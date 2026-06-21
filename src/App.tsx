@@ -596,22 +596,31 @@ export default function App() {
   }
 
   return (
-    <main className="min-h-screen px-4 py-8 text-slate-900 sm:px-6">
-      <div className="mx-auto max-w-4xl space-y-6">
-        <header className="space-y-2">
-          <p className="text-sm font-medium uppercase tracking-wide text-teal-700">CostShare</p>
-          <h1 className="text-3xl font-semibold">Split shared costs clearly</h1>
-          <p className="max-w-2xl text-sm text-slate-600">
-            Split shared costs clearly, even when not everyone shares every expense.
-          </p>
+    <main className="min-h-screen px-4 py-5 text-slate-900 sm:px-6 sm:py-6">
+      <div className="mx-auto max-w-4xl space-y-4">
+        <header className="flex items-start gap-3 sm:gap-4">
+          <img
+            alt="CostShare app icon"
+            className="h-14 w-14 flex-shrink-0 object-contain sm:h-16 sm:w-16"
+            src="/app_icon.png"
+          />
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight">
+              <span className="text-sky-600">Cost</span>
+              <span className="text-emerald-600">Share</span>
+            </h1>
+            <p className="max-w-2xl text-sm text-slate-600">
+              Split shared costs clearly, even when not everyone shares every expense.
+            </p>
+          </div>
         </header>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
           <label className="block text-sm font-medium text-slate-700" htmlFor="event-name">
             Event name
           </label>
           <input
-            className="no-print mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+            className="no-print mt-1.5 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
             id="event-name"
             onChange={(event) => setEventName(event.target.value)}
             placeholder={DEFAULT_EVENT_NAME}
@@ -630,7 +639,7 @@ export default function App() {
           onResetAllData={resetAllData}
         />
 
-        <section className="grid gap-4 md:grid-cols-2">
+        <section className="grid gap-3 md:grid-cols-2">
           <ParticipantManager
             isEditing={editingParticipantId !== null}
             name={participantName}
@@ -672,9 +681,9 @@ export default function App() {
 
         <SettlementList settlements={settlements} />
 
-        <footer className="no-print mt-4 space-y-3 pb-2 text-center text-xs text-slate-500">
+        <footer className="no-print mt-2 space-y-2 pb-2 text-center text-xs text-slate-500">
           <p>{footerSentence}</p>
-          <p className="flex flex-col items-center justify-center gap-2 border-t border-slate-200 pt-3 sm:flex-row sm:gap-3">
+          <p className="flex flex-col items-center justify-center gap-2 border-t border-slate-200 pt-2 sm:flex-row sm:gap-3">
             <span>
               Made by{' '}
               <a

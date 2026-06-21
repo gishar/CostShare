@@ -47,9 +47,9 @@ export function ExpenseForm({
   }
 
   return (
-    <div className="no-print rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="no-print rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
       <h2 className="text-lg font-semibold">{isEditing ? 'Edit expense' : 'Add expense'}</h2>
-      <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
+      <form className="mt-3 space-y-3" onSubmit={handleSubmit}>
         <input
           className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
           placeholder="Description"
@@ -85,7 +85,7 @@ export function ExpenseForm({
           </select>
         </div>
         {participants.length > 0 && (
-          <div className="space-y-2 rounded-md bg-slate-50 p-3">
+          <div className="space-y-2 rounded-md bg-slate-50 p-2.5">
             <div>
               <p className="text-sm font-medium text-slate-700">Shared with</p>
               <p className="text-xs text-slate-500">Only selected people split this expense.</p>

@@ -1,0 +1,16 @@
+{
+  "name": "CostShare",
+  "short_name": "CostShare",
+  "description": "Split shared costs clearly, even when not everyone shares every expense.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f766e",
+  "icons": [
+    {
+      "src": "/app_icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

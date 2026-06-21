@@ -7,9 +7,9 @@ type SettlementListProps = {
 
 export function SettlementList({ settlements }: SettlementListProps) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
       <h2 className="text-lg font-semibold">Settlements</h2>
-      <div className="mt-4 space-y-2">
+      <div className="mt-3 space-y-2">
         {settlements.length === 0 ? (
           <p className="text-sm text-slate-500">No settlements needed</p>
         ) : (
