@@ -1,7 +1,6 @@
-const CACHE_NAME = 'costshare-v1';
-const APP_SHELL = [
+const CACHE_NAME = 'costshare-v2';
+const SHELL_FILES = [
   '/',
-  '/index.html',
   '/site.webmanifest',
   '/favicon.png',
   '/app_icon.png',
@@ -9,9 +8,33 @@ const APP_SHELL = [
   '/icon-512.png',
 ];
 
+function getAssetUrlsFromHtml(html) {
+  const assetUrls = new Set();
+  const attrPattern = /\b(?:src|href)=["']([^"']+)["']/g;
+  let match;
+
+  while ((match = attrPattern.exec(html)) !== null) {
+    const url = new URL(match[1], self.location.origin);
+
+    if (url.origin === self.location.origin && url.pathname.startsWith('/assets/')) {
+      assetUrls.add(url.pathname);
+    }
+  }
+
+  return [...assetUrls];
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)),
+    caches.open(CACHE_NAME).then(async (cache) => {
+      const indexResponse = await fetch('/index.html', { cache: 'no-cache' });
+      const indexCopy = indexResponse.clone();
+      const html = await indexResponse.text();
+      const assetUrls = getAssetUrlsFromHtml(html);
+
+      await cache.put('/index.html', indexCopy);
+      await cache.addAll([...SHELL_FILES, ...assetUrls]);
+    }),
   );
   self.skipWaiting();
 });
