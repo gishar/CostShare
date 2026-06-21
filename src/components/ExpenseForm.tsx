@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { FormEvent } from 'react';
 import type { Participant } from '../types';
+import { StepBadge } from './StepBadge';
 
 type ExpenseFormProps = {
   amount: string;
@@ -48,7 +49,8 @@ export function ExpenseForm({
 
   return (
     <div className="no-print rounded-lg border border-t-4 border-slate-200 border-t-teal-600 bg-white p-3 shadow-sm sm:p-4">
-      <div className="border-b border-slate-100 pb-2">
+      <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+        <StepBadge>3</StepBadge>
         <h2 className="text-base font-semibold text-slate-900">
           {isEditing ? 'Edit expense' : 'Add expense'}
         </h2>

@@ -1,5 +1,6 @@
 import type { Expense } from '../types';
 import { formatCurrency } from '../utils';
+import { StepBadge } from './StepBadge';
 
 type ExpenseListProps = {
   expenses: Expense[];
@@ -41,7 +42,10 @@ export function ExpenseList({
   return (
     <section className="rounded-lg border border-t-4 border-slate-200 border-t-teal-600 bg-white p-3 shadow-sm sm:p-4">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
-        <h2 className="text-base font-semibold text-slate-900">Expenses</h2>
+        <div className="flex items-center gap-2">
+          <StepBadge>4</StepBadge>
+          <h2 className="text-base font-semibold text-slate-900">Expenses</h2>
+        </div>
         <span className="rounded-full bg-slate-100 px-2.5 py-1 text-sm font-medium text-slate-700">
           Total: {formatCurrency(totalSpent)}
         </span>
