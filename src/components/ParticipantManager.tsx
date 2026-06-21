@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react';
 import type { Participant } from '../types';
+import { StepBadge } from './StepBadge';
 
 type ParticipantManagerProps = {
   isEditing: boolean;
@@ -29,7 +30,8 @@ export function ParticipantManager({
 
   return (
     <div className="rounded-lg border border-t-4 border-slate-200 border-t-teal-600 bg-white p-3 shadow-sm sm:p-4">
-      <div className="border-b border-slate-100 pb-2">
+      <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+        <StepBadge>2</StepBadge>
         <h2 className="text-base font-semibold text-slate-900">Participants</h2>
       </div>
       <form className="no-print mt-3 flex gap-2" onSubmit={handleSubmit}>

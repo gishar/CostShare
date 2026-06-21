@@ -1,5 +1,6 @@
 import type { Balance } from '../types';
 import { formatCurrency } from '../utils';
+import { StepBadge } from './StepBadge';
 
 type BalanceTableProps = {
   balances: Balance[];
@@ -10,7 +11,8 @@ export function BalanceTable({ balances }: BalanceTableProps) {
 
   return (
     <section className="rounded-lg border border-t-4 border-slate-200 border-t-teal-600 bg-white p-3 shadow-sm sm:p-4">
-      <div className="border-b border-slate-100 pb-2">
+      <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+        <StepBadge>5</StepBadge>
         <h2 className="text-base font-semibold text-slate-900">Balances</h2>
       </div>
       <div className="mt-3 space-y-2">

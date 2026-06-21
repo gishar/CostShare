@@ -5,12 +5,13 @@ import { ExpenseForm } from './components/ExpenseForm';
 import { ExpenseList } from './components/ExpenseList';
 import { ParticipantManager } from './components/ParticipantManager';
 import { SettlementList } from './components/SettlementList';
+import { StepBadge } from './components/StepBadge';
 import type { Balance, Expense, Participant, Settlement } from './types';
 
 const PARTICIPANTS_KEY = 'fairshare:participants';
 const EXPENSES_KEY = 'fairshare:expenses';
 const EVENT_NAME_KEY = 'costshare:eventName';
-const DEFAULT_EVENT_NAME = 'Untitled CostShare';
+const DEFAULT_EVENT_NAME = 'Untitled Event';
 const COSTSHARE_URL = 'https://costshare.alestead.com';
 const FOOTER_SENTENCES = [
   'Good friendships survive shared expenses.',
@@ -55,6 +56,18 @@ function loadStoredData<T>(key: string, fallback: T): T {
   } catch {
     return fallback;
   }
+}
+
+function normalizeEventName(value: unknown): string {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  const trimmed = value.trim();
+
+  return trimmed === '' || trimmed === DEFAULT_EVENT_NAME || trimmed === 'Untitled CostShare'
+    ? ''
+    : trimmed;
 }
 
 function createId(): string {
@@ -227,9 +240,10 @@ function calculateSettlements(balances: Balance[]): Settlement[] {
 }
 
 export default function App() {
-  const [eventName, setEventName] = useState(() =>
-    loadStoredData(EVENT_NAME_KEY, DEFAULT_EVENT_NAME),
-  );
+  const [eventName, setEventName] = useState(() => {
+    const storedEventName = loadStoredData<string | null>(EVENT_NAME_KEY, null);
+    return normalizeEventName(storedEventName);
+  });
   const [participants, setParticipants] = useState<Participant[]>(() =>
     loadStoredData(PARTICIPANTS_KEY, []),
   );
@@ -250,7 +264,7 @@ export default function App() {
   useEffect(() => {
     const trimmedEventName = eventName.trim();
 
-    if (trimmedEventName && trimmedEventName !== DEFAULT_EVENT_NAME) {
+    if (trimmedEventName) {
       localStorage.setItem(EVENT_NAME_KEY, JSON.stringify(trimmedEventName));
     } else {
       localStorage.removeItem(EVENT_NAME_KEY);
@@ -449,7 +463,7 @@ export default function App() {
 
   function exportData() {
     const data: CostShareData = {
-      eventName: eventName.trim() || DEFAULT_EVENT_NAME,
+      eventName: eventName.trim(),
       participants,
       expenses,
     };
@@ -557,7 +571,7 @@ export default function App() {
         return;
       }
 
-      setEventName(data.eventName?.trim() || DEFAULT_EVENT_NAME);
+      setEventName(normalizeEventName(data.eventName));
       setParticipants(data.participants);
       setExpenses(data.expenses);
       setFooterSentence(chooseFooterSentence(data.expenses));
@@ -582,7 +596,7 @@ export default function App() {
     localStorage.removeItem(PARTICIPANTS_KEY);
     localStorage.removeItem(EXPENSES_KEY);
     localStorage.removeItem(EVENT_NAME_KEY);
-    setEventName(DEFAULT_EVENT_NAME);
+    setEventName('');
     setParticipants([]);
     setExpenses([]);
     setEditingParticipantId(null);
@@ -616,7 +630,8 @@ export default function App() {
         </header>
 
         <section className="rounded-lg border border-t-4 border-slate-200 border-t-teal-600 bg-white p-3 shadow-sm sm:p-4">
-          <div className="border-b border-slate-100 pb-2">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+            <StepBadge>1</StepBadge>
             <label className="block text-base font-semibold text-slate-900" htmlFor="event-name">
               Event name
             </label>
