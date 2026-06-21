@@ -19,7 +19,7 @@ export function ExpenseList({
   onRemoveExpense,
 }: ExpenseListProps) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold">Expenses</h2>
         <span className="text-sm font-medium text-slate-600">
@@ -27,7 +27,7 @@ export function ExpenseList({
         </span>
       </div>
 
-      <div className="mt-4 space-y-2">
+      <div className="mt-3 space-y-2">
         {expenses.length === 0 ? (
           <p className="text-sm text-slate-500">No expenses yet</p>
         ) : (
