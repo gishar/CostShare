@@ -58,6 +58,18 @@ function loadStoredData<T>(key: string, fallback: T): T {
   }
 }
 
+function normalizeEventName(value: unknown): string {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  const trimmed = value.trim();
+
+  return trimmed === '' || trimmed === DEFAULT_EVENT_NAME || trimmed === 'Untitled CostShare'
+    ? ''
+    : trimmed;
+}
+
 function createId(): string {
   return crypto.randomUUID();
 }
@@ -230,7 +242,7 @@ function calculateSettlements(balances: Balance[]): Settlement[] {
 export default function App() {
   const [eventName, setEventName] = useState(() => {
     const storedEventName = loadStoredData<string | null>(EVENT_NAME_KEY, null);
-    return storedEventName === 'Untitled CostShare' ? '' : storedEventName ?? '';
+    return normalizeEventName(storedEventName);
   });
   const [participants, setParticipants] = useState<Participant[]>(() =>
     loadStoredData(PARTICIPANTS_KEY, []),
@@ -451,7 +463,7 @@ export default function App() {
 
   function exportData() {
     const data: CostShareData = {
-      eventName: eventName.trim() || DEFAULT_EVENT_NAME,
+      eventName: eventName.trim(),
       participants,
       expenses,
     };
@@ -559,7 +571,7 @@ export default function App() {
         return;
       }
 
-      setEventName(data.eventName?.trim() || '');
+      setEventName(normalizeEventName(data.eventName));
       setParticipants(data.participants);
       setExpenses(data.expenses);
       setFooterSentence(chooseFooterSentence(data.expenses));
