@@ -615,12 +615,14 @@ export default function App() {
           </div>
         </header>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
-          <label className="block text-sm font-medium text-slate-700" htmlFor="event-name">
-            Event name
-          </label>
+        <section className="rounded-lg border border-t-4 border-slate-200 border-t-teal-600 bg-white p-3 shadow-sm sm:p-4">
+          <div className="border-b border-slate-100 pb-2">
+            <label className="block text-base font-semibold text-slate-900" htmlFor="event-name">
+              Event name
+            </label>
+          </div>
           <input
-            className="no-print mt-1.5 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+            className="no-print mt-3 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
             id="event-name"
             onChange={(event) => setEventName(event.target.value)}
             placeholder={DEFAULT_EVENT_NAME}
@@ -683,6 +685,13 @@ export default function App() {
 
         <footer className="no-print mt-2 space-y-2 pb-2 text-center text-xs text-slate-500">
           <p>{footerSentence}</p>
+          <div className="mx-auto max-w-3xl space-y-1 text-slate-900">
+            <p className="text-xs font-medium">★ Want CostShare app on your phone? ★</p>
+            <p className="text-[11px] leading-5 sm:text-xs">
+              Open this site in your phone's web browser, tap Share or Menu, then choose Add to
+              Home Screen or Install.
+            </p>
+          </div>
           <p className="flex flex-col items-center justify-center gap-2 border-t border-slate-200 pt-2 sm:flex-row sm:gap-3">
             <span>
               Made by{' '}
