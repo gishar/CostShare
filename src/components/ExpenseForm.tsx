@@ -47,8 +47,12 @@ export function ExpenseForm({
   }
 
   return (
-    <div className="no-print rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
-      <h2 className="text-lg font-semibold">{isEditing ? 'Edit expense' : 'Add expense'}</h2>
+    <div className="no-print rounded-lg border border-t-4 border-slate-200 border-t-teal-600 bg-white p-3 shadow-sm sm:p-4">
+      <div className="border-b border-slate-100 pb-2">
+        <h2 className="text-base font-semibold text-slate-900">
+          {isEditing ? 'Edit expense' : 'Add expense'}
+        </h2>
+      </div>
       <form className="mt-3 space-y-3" onSubmit={handleSubmit}>
         <input
           className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"

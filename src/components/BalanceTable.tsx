@@ -9,8 +9,10 @@ export function BalanceTable({ balances }: BalanceTableProps) {
   const sortedBalances = [...balances].sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
-      <h2 className="text-lg font-semibold">Balances</h2>
+    <section className="rounded-lg border border-t-4 border-slate-200 border-t-teal-600 bg-white p-3 shadow-sm sm:p-4">
+      <div className="border-b border-slate-100 pb-2">
+        <h2 className="text-base font-semibold text-slate-900">Balances</h2>
+      </div>
       <div className="mt-3 space-y-2">
         {balances.length === 0 ? (
           <p className="text-sm text-slate-500">Add participants to see balances.</p>

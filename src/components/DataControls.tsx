@@ -33,7 +33,7 @@ export function DataControls({
   }
 
   return (
-    <section className="no-print space-y-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+    <section className="no-print space-y-3 rounded-lg border border-t-4 border-slate-200 border-t-sky-600 bg-white p-3 shadow-sm sm:p-4">
       <p className="text-sm text-slate-600">
         Use backup files to save your CostShare or move it to another device.
       </p>
