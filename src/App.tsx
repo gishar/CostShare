@@ -6,7 +6,9 @@ import { ExpenseList } from './components/ExpenseList';
 import { ParticipantManager } from './components/ParticipantManager';
 import { SettlementList } from './components/SettlementList';
 import { StepBadge } from './components/StepBadge';
+import { SummaryStrip } from './components/SummaryStrip';
 import type { Balance, Expense, Participant, Settlement } from './types';
+import { formatCurrency } from './utils';
 
 const PARTICIPANTS_KEY = 'fairshare:participants';
 const EXPENSES_KEY = 'fairshare:expenses';
@@ -260,6 +262,7 @@ export default function App() {
     chooseFooterSentence(loadStoredData(EXPENSES_KEY, [])),
   );
   const [shareMessage, setShareMessage] = useState('');
+  const [copyMessage, setCopyMessage] = useState('');
 
   useEffect(() => {
     const trimmedEventName = eventName.trim();
@@ -328,6 +331,7 @@ export default function App() {
   const settlements = useMemo(() => calculateSettlements(balances), [balances]);
 
   const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const displayEventName = eventName.trim() || DEFAULT_EVENT_NAME;
 
   function clearParticipantForm() {
     setEditingParticipantId(null);
@@ -461,6 +465,75 @@ export default function App() {
     return sharedWithFor(expense, participants).map(participantNameFor).join(', ');
   }
 
+  function settlementSummaryLines(): string[] {
+    if (settlements.length === 0) {
+      return ['No settlements needed. Everyone is settled.'];
+    }
+
+    return settlements.map(
+      (settlement) =>
+        `* ${settlement.fromName} pays ${settlement.toName} ${formatCurrency(settlement.amount)}`,
+    );
+  }
+
+  function createSettlementSummary(): string {
+    return [
+      `CostShare: ${displayEventName}`,
+      `Total expenses: ${formatCurrency(totalSpent)}`,
+      '',
+      'Settlements:',
+      '',
+      ...settlementSummaryLines(),
+    ].join('\n');
+  }
+
+  function createFullEventSummary(): string {
+    const sortedBalances = [...balances].sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
+    const balanceLines =
+      sortedBalances.length > 0
+        ? sortedBalances.map(
+            (balance) =>
+              `* ${balance.name}: paid ${formatCurrency(balance.paid)}, share ${formatCurrency(
+                balance.share,
+              )}, net ${formatCurrency(balance.net)}`,
+          )
+        : ['No balances yet.'];
+
+    return [
+      `CostShare: ${displayEventName}`,
+      `Participants: ${participants.length}`,
+      `Expenses: ${expenses.length}`,
+      `Total expenses: ${formatCurrency(totalSpent)}`,
+      '',
+      'Balances:',
+      '',
+      ...balanceLines,
+      '',
+      'Settlements:',
+      '',
+      ...settlementSummaryLines(),
+    ].join('\n');
+  }
+
+  async function copySummary(text: string, successMessage: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyMessage(successMessage);
+    } catch {
+      setCopyMessage('Copy failed');
+    }
+
+    window.setTimeout(() => setCopyMessage(''), 2500);
+  }
+
+  function copySettlementSummary() {
+    void copySummary(createSettlementSummary(), 'Settlement summary copied');
+  }
+
+  function copyFullEventSummary() {
+    void copySummary(createFullEventSummary(), 'Full summary copied');
+  }
+
   function exportData() {
     const data: CostShareData = {
       eventName: eventName.trim(),
@@ -478,10 +551,9 @@ export default function App() {
   }
 
   function exportSpreadsheet() {
-    const currentEventName = eventName.trim() || DEFAULT_EVENT_NAME;
     const sortedBalances = [...balances].sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
     const rows = [
-      csvRow(['Event Name', currentEventName]),
+      csvRow(['Event Name', displayEventName]),
       '',
       csvRow(['Participants']),
       csvRow(['Name']),
@@ -644,7 +716,7 @@ export default function App() {
             value={eventName}
           />
           <p className="print-only mt-1 text-lg font-semibold">
-            {eventName.trim() || DEFAULT_EVENT_NAME}
+            {displayEventName}
           </p>
         </section>
 
@@ -695,6 +767,16 @@ export default function App() {
         />
 
         <BalanceTable balances={balances} />
+
+        <SummaryStrip
+          copyMessage={copyMessage}
+          expenseCount={expenses.length}
+          onCopyFullSummary={copyFullEventSummary}
+          onCopySettlementSummary={copySettlementSummary}
+          participantCount={participants.length}
+          settlementCount={settlements.length}
+          totalSpent={totalSpent}
+        />
 
         <SettlementList settlements={settlements} />
 
