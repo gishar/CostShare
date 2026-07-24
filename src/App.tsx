@@ -51,6 +51,11 @@ type ImportedCostShareData = {
   expenses: Expense[];
 };
 
+type DeletedExpenseSnapshot = {
+  expense: Expense;
+  index: number;
+};
+
 function loadStoredData<T>(key: string, fallback: T): T {
   try {
     const value = localStorage.getItem(key);
@@ -263,6 +268,7 @@ export default function App() {
   );
   const [shareMessage, setShareMessage] = useState('');
   const [copyMessage, setCopyMessage] = useState('');
+  const [lastDeletedExpense, setLastDeletedExpense] = useState<DeletedExpenseSnapshot | null>(null);
 
   useEffect(() => {
     const trimmedEventName = eventName.trim();
@@ -364,6 +370,7 @@ export default function App() {
   }
 
   function removeParticipant(id: string) {
+    setLastDeletedExpense(null);
     setParticipants((current) => current.filter((participant) => participant.id !== id));
     setExpenses((current) =>
       current
@@ -434,11 +441,52 @@ export default function App() {
   }
 
   function removeExpense(id: string) {
-    setExpenses((current) => current.filter((expense) => expense.id !== id));
+    setExpenses((current) => {
+      const deletedIndex = current.findIndex((expense) => expense.id === id);
+
+      if (deletedIndex === -1) {
+        return current;
+      }
+
+      setLastDeletedExpense({ expense: current[deletedIndex], index: deletedIndex });
+      return current.filter((expense) => expense.id !== id);
+    });
 
     if (editingExpenseId === id) {
       clearExpenseForm();
     }
+  }
+
+  function undoDeletedExpense() {
+    if (!lastDeletedExpense) {
+      return;
+    }
+
+    const participantIds = new Set(participants.map((participant) => participant.id));
+    const canRestore =
+      participantIds.has(lastDeletedExpense.expense.paidBy) &&
+      lastDeletedExpense.expense.sharedWith.every((participantId) => participantIds.has(participantId));
+
+    if (!canRestore) {
+      setLastDeletedExpense(null);
+      window.alert('Cannot restore this expense because its participants changed.');
+      return;
+    }
+
+    setExpenses((current) => {
+      if (current.some((expense) => expense.id === lastDeletedExpense.expense.id)) {
+        return current;
+      }
+
+      const next = [...current];
+      next.splice(
+        Math.min(lastDeletedExpense.index, next.length),
+        0,
+        lastDeletedExpense.expense,
+      );
+      return next;
+    });
+    setLastDeletedExpense(null);
   }
 
   function editExpense(expense: Expense) {
@@ -651,6 +699,7 @@ export default function App() {
       setExpenseDescription('');
       setExpenseAmount('');
       setEditingExpenseId(null);
+      setLastDeletedExpense(null);
       setPaidBy(data.participants[0]?.id ?? '');
       setSelectedParticipantIds(data.participants.map((participant) => participant.id));
     } catch {
@@ -659,9 +708,11 @@ export default function App() {
   }
 
   function resetAllData() {
-    const confirmed = window.confirm('This will permanently delete all CostShare data.');
+    const confirmed = window.prompt(
+      'This will permanently delete all participants, expenses, and event data from this browser. Type RESET to continue.',
+    );
 
-    if (!confirmed) {
+    if (confirmed !== 'RESET') {
       return;
     }
 
@@ -678,6 +729,7 @@ export default function App() {
     setPaidBy('');
     setSelectedParticipantIds([]);
     setEditingExpenseId(null);
+    setLastDeletedExpense(null);
     setFooterSentence(chooseFooterSentence([]));
   }
 
@@ -765,6 +817,19 @@ export default function App() {
           sharedNamesFor={sharedNamesFor}
           totalSpent={totalSpent}
         />
+
+        {lastDeletedExpense && (
+          <div className="no-print flex flex-col gap-2 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-900 sm:flex-row sm:items-center sm:justify-between">
+            <span>Deleted "{lastDeletedExpense.expense.description}".</span>
+            <button
+              className="self-start rounded-md bg-teal-700 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-200 sm:self-auto"
+              onClick={undoDeletedExpense}
+              type="button"
+            >
+              Undo
+            </button>
+          </div>
+        )}
 
         <BalanceTable balances={balances} />
 
